@@ -5,7 +5,8 @@ import {
   type NextAuthOptions,
 } from "next-auth";
 import { type Adapter } from "next-auth/adapters";
-import DiscordProvider from "next-auth/providers/discord";
+import EveonlineProvider from "./auth_provider/eveProvider";
+// import DiscordProvider from "next-auth/providers/discord";
 
 import { env } from "~/env";
 import { db } from "~/server/db";
@@ -49,9 +50,39 @@ export const authOptions: NextAuthOptions = {
   },
   adapter: DrizzleAdapter(db, createTable) as Adapter,
   providers: [
+    EveonlineProvider({
+      clientId: env.EVE_CLIENT_ID,
+      clientSecret: env.EVE_CLIENT_SECRET,
+      // redirectUri: env.EVE_REDIRECT_URI,
+    }),
+    // {
+    //   id: "eveonline",
+    //   name: "EVE Online",
+    //   type: "oauth",
+    //   version: "2.0",
+    //   accessTokenUrl: "https://login.eveonline.com/v2/oauth/token",
+    //   requestTokenUrl: "https://login.eveonline.com/v2/oauth/authorize",
+    //   authorizationUrl:
+    //     "https://login.eveonline.com/v2/oauth/authorize?response_type=code",
+    //   profileUrl: "https://esi.evetech.net/verify",
+    //   profile(profile) {
+    //     return {
+    //       id: profile.CharacterID,
+    //       name: profile.CharacterName,
+    //       email: null,
+    //       image: `https://images.evetech.net/characters/${profile.CharacterID}/portrait`,
+    //     };
+    //   },
+    //   clientId: env.EVE_CLIENT_ID,
+    //   clientSecret: env.EVE_CLIENT_SECRET,
+    // }
+    // EVEOnlineProvider({
+    //   clientId: env.EVE_CLIENT_ID,
+    //   clientSecret: env.EVE_CLIENT_SECRET,
+    // }),
     // DiscordProvider({
-    //   clientId: env.DISCORD_CLIENT_ID,
-    //   clientSecret: env.DISCORD_CLIENT_SECRET,
+    //   clientId: env.EVEONLINE_CLIENT_ID,
+    //   clientSecret: env.EVEONLINE_CLIENT_SECRET,
     // }),
     /**
      * ...add more providers here.
