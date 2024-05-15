@@ -12,7 +12,7 @@ export const metadata = {
 function TopNav() {
   // Add a top nav bar with login
   return (
-    <nav className="flex w-full items-center justify-between border-b p-4 text-xl font-semibold text-black">
+    <nav className="flex items-center justify-between border-b p-4 text-xl font-semibold text-black">
       <div>
         <Link href="/">Home</Link>
       </div>
