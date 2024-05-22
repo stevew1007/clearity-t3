@@ -1,4 +1,5 @@
 // lib/esiClient.ts
+import "server-only";
 import axios from "axios";
 import type {
   charactersInfo,

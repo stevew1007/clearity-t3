@@ -1,3 +1,4 @@
+import "server-only";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import {
   getServerSession,
@@ -11,8 +12,11 @@ import EveonlineProvider from "./auth_provider/eveProvider";
 import { env } from "~/env";
 import { db } from "~/server/db";
 import { accounts, corps, createTable } from "~/server/db/schema";
-import { getCharacterInfo, getCorpBalence, getCorpInfo } from "~/lib/esiClient";
+import { getCharacterInfo, getCorpBalence, getCorpInfo } from "./lib/esiClient";
 import { eq } from "drizzle-orm";
+import { getAccountById, getCorpById } from "./query";
+import { newCorp } from "./insert";
+// import { eq } from "drizzle-orm";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -58,24 +62,14 @@ export const authOptions: NextAuthOptions = {
         const { providerAccountId } = account;
         try {
           const info = await getCharacterInfo(providerAccountId);
-          const existing_corp = await db.query.corps.findMany({
-            where: eq(corps.esi_id, info.corporation_id),
-          });
-          const db_acc = await db.query.accounts.findFirst({
-            where: eq(accounts.providerAccountId, providerAccountId),
-          });
-          if (!existing_corp.length) {
-            const corp_info = await getCorpInfo(info.corporation_id);
-            await db.insert(corps).values({
-              esi_id: info.corporation_id,
-              name: corp_info.name,
-              alliance_id: corp_info.alliance_id,
-            });
+          let corp = await getCorpById(info.corporation_id);
+          const db_acc = await getAccountById(providerAccountId);
+
+          if (corp === undefined) {
+            corp = await newCorp(info.corporation_id);
           }
-          const corp_entry = await db.query.corps.findFirst({
-            where: eq(corps.esi_id, info.corporation_id),
-          });
-          if (corp_entry?.balence === null && db_acc && account.access_token) {
+
+          if (corp.balence === null && db_acc && account.access_token) {
             try {
               const balence = await getCorpBalence(
                 info.corporation_id,

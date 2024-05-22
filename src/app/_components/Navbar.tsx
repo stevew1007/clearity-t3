@@ -5,6 +5,7 @@ import { SignInBtn } from "./login-btn";
 
 function AuthButton() {
   const { data: session } = useSession();
+  // console.log("status::: ", status);
 
   if (session) {
     return (

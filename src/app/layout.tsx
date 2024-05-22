@@ -9,10 +9,10 @@ import Link from "next/link";
 //   // InferGetServerSidePropsType,
 // } from "next";
 // import { signIn } from "next-auth/react";
-import { AddAccEveBtn } from "./components/login-btn";
+import { AddAccEveBtn } from "./_components/login-btn";
 import { getServerSession } from "next-auth";
-import SessionProvider from "./components/SessionProvider";
-import Navbar from "./components/Navbar";
+import SessionProvider from "./_components/SessionProvider";
+import Navbar from "./_components/Navbar";
 import { authOptions } from "~/server/auth";
 import { redirect } from "next/navigation";
 // import { getServerSession } from "next-auth/next";
