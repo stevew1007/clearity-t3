@@ -1,12 +1,15 @@
 import { relations, sql } from "drizzle-orm";
 import {
+  doublePrecision,
   index,
   integer,
   pgTableCreator,
   primaryKey,
+  real,
   serial,
   text,
   timestamp,
+  uuid,
   varchar,
 } from "drizzle-orm/pg-core";
 import { type AdapterAccount } from "next-auth/adapters";
@@ -47,6 +50,7 @@ export const users = createTable("user", {
     withTimezone: true,
   }).default(sql`CURRENT_TIMESTAMP`),
   image: varchar("image", { length: 255 }),
+  role: varchar("role", { length: 255 }),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -69,6 +73,10 @@ export const accounts = createTable(
     expires_at: integer("expires_at"),
     token_type: varchar("token_type", { length: 255 }),
     scope: varchar("scope", { length: 255 }),
+    alliance_id: integer("alliance_id"),
+    corporation_id: integer("corporation_id"),
+    character_name: varchar("character_name", { length: 255 }),
+    title: varchar("title", { length: 255 }),
     id_token: text("id_token"),
     session_state: varchar("session_state", { length: 255 }),
   },
@@ -121,3 +129,24 @@ export const verificationTokens = createTable(
     compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
   }),
 );
+
+export const corps = createTable("corp", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  esi_id: integer("esi_id").unique(),
+  name: varchar("name", { length: 255 }),
+  updatedBy: varchar("updatedBy", { length: 255 }),
+  alliance_id: integer("alliance_id"),
+  balence: doublePrecision("balence"),
+});
+
+// export const corpsRelations = relations(corps, ({ one }) => ({
+//   account: one(accounts, {
+//     fields: [corps.updatedByLink],
+//     references: [accounts.providerAccountId],
+//   }),
+// }));
+
+export const orgnization = createTable("orgnization", {
+  id: varchar("id", { length: 255 }).notNull().primaryKey(),
+  name: varchar("name", { length: 255 }),
+});

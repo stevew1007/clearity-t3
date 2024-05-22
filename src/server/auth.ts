@@ -10,7 +10,9 @@ import EveonlineProvider from "./auth_provider/eveProvider";
 
 import { env } from "~/env";
 import { db } from "~/server/db";
-import { createTable } from "~/server/db/schema";
+import { accounts, corps, createTable } from "~/server/db/schema";
+import { getCharacterInfo, getCorpBalence, getCorpInfo } from "~/lib/esiClient";
+import { eq } from "drizzle-orm";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -48,6 +50,67 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   },
+  events: {
+    async signIn({ account }) {
+      //
+      if (account?.provider === "eveonline") {
+        //
+        const { providerAccountId } = account;
+        try {
+          const info = await getCharacterInfo(providerAccountId);
+          const existing_corp = await db.query.corps.findMany({
+            where: eq(corps.esi_id, info.corporation_id),
+          });
+          const db_acc = await db.query.accounts.findFirst({
+            where: eq(accounts.providerAccountId, providerAccountId),
+          });
+          if (!existing_corp.length) {
+            const corp_info = await getCorpInfo(info.corporation_id);
+            await db.insert(corps).values({
+              esi_id: info.corporation_id,
+              name: corp_info.name,
+              alliance_id: corp_info.alliance_id,
+            });
+          }
+          const corp_entry = await db.query.corps.findFirst({
+            where: eq(corps.esi_id, info.corporation_id),
+          });
+          if (corp_entry?.balence === null && db_acc && account.access_token) {
+            try {
+              const balence = await getCorpBalence(
+                info.corporation_id,
+                account.access_token,
+              );
+              if (balence > 0) {
+                await db
+                  .update(corps)
+                  .set({
+                    balence: balence,
+                    updatedBy: providerAccountId,
+                  })
+                  .where(eq(corps.esi_id, info.corporation_id));
+              }
+            } catch (error) {
+              console.error(error);
+            }
+          }
+          await db
+            .update(accounts)
+            .set({
+              alliance_id: info.alliance_id,
+              corporation_id: info.corporation_id,
+              character_name: info.name,
+              title: info.title,
+            })
+            .where(eq(accounts.providerAccountId, providerAccountId));
+        } catch (error) {
+          console.error("Error fetching character info", error);
+          // return false;
+        }
+      }
+      // return true;
+    },
+  },
   adapter: DrizzleAdapter(db, createTable) as Adapter,
   providers: [
     EveonlineProvider({
@@ -55,35 +118,6 @@ export const authOptions: NextAuthOptions = {
       clientSecret: env.EVE_CLIENT_SECRET,
       // redirectUri: env.EVE_REDIRECT_URI,
     }),
-    // {
-    //   id: "eveonline",
-    //   name: "EVE Online",
-    //   type: "oauth",
-    //   version: "2.0",
-    //   accessTokenUrl: "https://login.eveonline.com/v2/oauth/token",
-    //   requestTokenUrl: "https://login.eveonline.com/v2/oauth/authorize",
-    //   authorizationUrl:
-    //     "https://login.eveonline.com/v2/oauth/authorize?response_type=code",
-    //   profileUrl: "https://esi.evetech.net/verify",
-    //   profile(profile) {
-    //     return {
-    //       id: profile.CharacterID,
-    //       name: profile.CharacterName,
-    //       email: null,
-    //       image: `https://images.evetech.net/characters/${profile.CharacterID}/portrait`,
-    //     };
-    //   },
-    //   clientId: env.EVE_CLIENT_ID,
-    //   clientSecret: env.EVE_CLIENT_SECRET,
-    // }
-    // EVEOnlineProvider({
-    //   clientId: env.EVE_CLIENT_ID,
-    //   clientSecret: env.EVE_CLIENT_SECRET,
-    // }),
-    // DiscordProvider({
-    //   clientId: env.EVEONLINE_CLIENT_ID,
-    //   clientSecret: env.EVEONLINE_CLIENT_SECRET,
-    // }),
     /**
      * ...add more providers here.
      *
@@ -94,6 +128,7 @@ export const authOptions: NextAuthOptions = {
      * @see https://next-auth.js.org/providers/github
      */
   ],
+  secret: env.NEXTAUTH_SECRET,
 };
 
 /**

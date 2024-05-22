@@ -2,6 +2,22 @@ import "~/styles/globals.css";
 
 import { GeistSans } from "geist/font/sans";
 import Link from "next/link";
+// import { SignInAuthorizationParams, signIn } from "next-auth/react";
+
+// import type {
+//   GetServerSidePropsContext,
+//   // InferGetServerSidePropsType,
+// } from "next";
+// import { signIn } from "next-auth/react";
+import { AddAccEveBtn } from "./components/login-btn";
+import { getServerSession } from "next-auth";
+import SessionProvider from "./components/SessionProvider";
+import Navbar from "./components/Navbar";
+import { authOptions } from "~/server/auth";
+import { redirect } from "next/navigation";
+// import { getServerSession } from "next-auth/next";
+// // import { authOptions } from "../api/auth/[...nextauth]";
+// import { authOptions } from "~/server/auth";
 
 export const metadata = {
   title: "Clearity T3",
@@ -10,30 +26,59 @@ export const metadata = {
 };
 
 function TopNav() {
+  // const session = getServerSession();
+  // console.log("session::: ", session);
   // Add a top nav bar with login
   return (
-    <nav className="flex items-center justify-between border-b p-4 text-xl font-semibold text-black">
+    <nav className="flex items-center justify-between border-b px-4 py-2 text-xl text-black">
       <div>
-        <Link href="/">Home</Link>
+        <Link href="/">Clearity</Link>
       </div>
-      <div>
-        <Link href="/login">Login</Link>
+      <div className="flex flex-row gap-4">
+        <Link href="/api/auth/signin">Login</Link>
+        <AddAccEveBtn />
+        <Link href="/register">Register</Link>
       </div>
     </nav>
   );
 }
 
-export default function RootLayout({
+// export async function getServerSideProps(context: GetServerSidePropsContext) {
+//   const session = await getServerSession(context.req, context.res, authOptions);
+
+//   // If the user is already logged in, redirect.
+//   // Note: Make sure not to redirect to the same page
+//   // To avoid an infinite loop!
+//   if (session) {
+//     return { redirect: { destination: "/" } };
+//   }
+
+//   const providers = await getProviders();
+
+//   return {
+//     props: { providers: providers ?? [] },
+//   };
+// }
+
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getServerSession(authOptions);
+  // console.log("session::: ", session);
+  if (!session) {
+    redirect("/api/auth/signin");
+  }
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
-      <body className="flex flex-col gap-4 p-4">
-        <TopNav />
-        {children}
-      </body>
+      <SessionProvider session={session}>
+        <body className="flex flex-col gap-4 p-4">
+          {/* <TopNav /> */}
+          <Navbar />
+          {children}
+        </body>
+      </SessionProvider>
     </html>
   );
 }

@@ -4,11 +4,13 @@ import type {
 } from "next";
 import { getProviders, signIn } from "next-auth/react";
 import { getServerSession } from "next-auth/next";
+// import { authOptions } from "../api/auth/[...nextauth]";
 import { authOptions } from "~/server/auth";
 
-export default function Register({
+export default function SignIn({
   providers,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  console.log("providers::: ", providers);
   return (
     <>
       {Object.values(providers).map((provider) => (

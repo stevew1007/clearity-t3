@@ -1,5 +1,5 @@
 // import type { OAuthConfig, OAuthUserConfig } from "next-auth/providers";
-import type { OAuthConfig, OAuthUserConfig } from "next-auth/providers/oauth";
+import type { OAuthConfig } from "next-auth/providers/oauth";
 
 export interface EveOnlineProviderOptions {
   clientId: string;
@@ -44,6 +44,7 @@ export default function EveonlineProvider(
         name: profile.CharacterName,
         email: null, // Eve Online does not provide email
         image: `https://images.evetech.net/characters/${profile.CharacterID}/portrait`,
+        role: "user",
       };
     },
     ...options,
