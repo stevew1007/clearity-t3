@@ -37,7 +37,7 @@ export default function EveonlineProvider(
         grant_type: "authorization_code",
         response_type: "code",
         state: "",
-        redirect_uri: "http://localhost:3000/api/auth/callback/eveonline",
+        // redirect_uri: "http://localhost:3000/api/auth/callback/eveonline",
       },
     },
     token: "https://login.eveonline.com/v2/oauth/token",
