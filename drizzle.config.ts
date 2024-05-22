@@ -8,5 +8,5 @@ export default {
   dbCredentials: {
     url: env.POSTGRES_URL,
   },
-  tablesFilter: ["clearity-t3_*"],
+  tablesFilter: [`${env.DB_PREFIX}_*`],
 } satisfies Config;
