@@ -28,8 +28,12 @@ export default function EveonlineProvider(
     authorization: {
       url: "https://login.eveonline.com/v2/oauth/authorize",
       params: {
-        scope:
-          "esi-wallet.read_corporation_wallets.v1 esi-markets.read_corporation_orders.v1",
+        scope: [
+          "esi-wallet.read_character_wallet.v1",
+          "esi-markets.read_character_orders.v1",
+          "esi-wallet.read_corporation_wallets.v1",
+          "esi-markets.read_corporation_orders.v1",
+        ].join(" "),
         grant_type: "authorization_code",
         response_type: "code",
         state: "",
