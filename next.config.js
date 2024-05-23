@@ -12,6 +12,12 @@ const config = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  images: {
+    remotePatterns: [
+      { hostname: "images.unsplash.com" },
+      { hostname: "images.evetech.net" },
+    ],
+  },
 };
 
 export default config;
