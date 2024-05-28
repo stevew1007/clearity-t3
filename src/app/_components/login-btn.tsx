@@ -2,7 +2,7 @@
 import { signIn } from "next-auth/react";
 
 export function SignInBtn() {
-  return <button onClick={() => signIn("eveonline")}>Sign in with EVE</button>;
+  return <button onClick={() => signIn("eveonline")} />;
 }
 
 export function AddAccEveBtn() {

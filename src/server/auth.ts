@@ -12,10 +12,10 @@ import EveonlineProvider from "./auth_provider/eveProvider";
 import { env } from "~/env";
 import { db } from "~/server/db";
 import { accounts, corps, createTable } from "~/server/db/schema";
-import { getCharacterInfo, getCorpBalence, getCorpInfo } from "./lib/esiClient";
+import { getCharacterInfo, getCorpBalence } from "./lib/esiClient";
 import { eq } from "drizzle-orm";
 import { getAccountById, getCorpById } from "./query";
-import { newCorp } from "./insert";
+import { newCorp, updateTokenIfNeededForUser } from "./insert";
 // import { eq } from "drizzle-orm";
 
 /**
@@ -46,13 +46,16 @@ declare module "next-auth" {
  */
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-      },
-    }),
+    session: async ({ session, user }) => {
+      await updateTokenIfNeededForUser(user.id);
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: user.id,
+        },
+      };
+    },
   },
   events: {
     async signIn({ account }) {

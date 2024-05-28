@@ -5,7 +5,10 @@ import type {
   charactersInfo,
   corpBalancePerDivision,
   corpInfo,
+  corpJournalEntry,
+  token,
 } from "./esiInterface";
+import { env } from "~/env";
 
 export const esiClient = axios.create({
   baseURL: "https://esi.evetech.net/latest/",
@@ -15,9 +18,26 @@ export const esiClient = axios.create({
   },
 });
 
-export async function getCharacterInfo(
-  characterId: string,
-): Promise<charactersInfo> {
+export async function getRefreshToken(refreshToken: string) {
+  const response = await axios.post(
+    "https://login.eveonline.com/v2/oauth/token",
+    new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+    }),
+    {
+      headers: {
+        Authorization: `Basic ${Buffer.from(
+          `${env.EVE_CLIENT_ID}:${env.EVE_CLIENT_SECRET}`,
+        ).toString("base64")}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    },
+  );
+  return response.data as token;
+}
+
+export async function getCharacterInfo(characterId: string) {
   const response = await esiClient.get(
     `/characters/${characterId}/?datasource=tranquility`,
   );
@@ -40,6 +60,7 @@ export async function getCorpBalence(corpId: number, token: string) {
       },
     },
   );
+  // console.log("response::: ", response);
   if (response.status != 200) {
     if (response.status == 403) {
       return -1;
@@ -50,4 +71,30 @@ export async function getCorpBalence(corpId: number, token: string) {
   }
   const balence = response.data as corpBalancePerDivision[];
   return balence.reduce((acc, cur) => acc + cur.balance, 0);
+}
+
+export async function getCorpJournal(
+  corpId: number,
+  token: string,
+  division: number,
+) {
+  const response = await esiClient.get(
+    `/corporations/${corpId}/wallets/${division}/journal/?datasource=tranquility`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+  if (response.status != 200) {
+    if (response.status == 403) {
+      return -1;
+    }
+    throw new Error(
+      "Failed to get corp journal, error: " + response.statusText,
+    );
+  }
+
+  // return response.data;
+  return response.data as corpJournalEntry[];
 }
