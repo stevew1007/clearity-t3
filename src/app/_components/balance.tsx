@@ -27,14 +27,11 @@ const CorpBalenceCard = React.forwardRef<HTMLDivElement, CorpBalenceCardProps>(
     const data = await queryCorpBalence(corp.esi_id!);
     // console.log("data::: ", data);
     let balenceStr = "Nah";
-    let time_since = null;
+    // let time_since = null;
     if (data?.balence) {
       balenceStr = data.balence
         ? `${new Intl.NumberFormat().format(data.balence / 1000000000)}B isk`
         : "Nah";
-      if (data?.updated_at) {
-        time_since = moment(data.updated_at).fromNow();
-      }
     }
     // const query = useQuery({
     //   queryFn: async () => {
@@ -59,7 +56,7 @@ const CorpBalenceCard = React.forwardRef<HTMLDivElement, CorpBalenceCardProps>(
         </CardHeader>
         {corp.updatedBy && (
           <CardContent>
-            <div className="text-muted-foreground text-xs">
+            <div className="text-xs text-muted-foreground">
               Updated by: #{data?.updater_id}{" "}
               {data?.updated_at && moment(data.updated_at).fromNow()}
             </div>

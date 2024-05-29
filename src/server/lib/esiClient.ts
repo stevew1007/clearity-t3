@@ -1,14 +1,18 @@
 // lib/esiClient.ts
 import "server-only";
 import axios from "axios";
-import type {
-  charactersInfo,
-  corpBalancePerDivision,
-  corpInfo,
-  corpJournalEntry,
-  token,
+import {
+  charactersInfoSchema,
+  corpInfoSchema,
+  corpBalanceSchema,
+  corpJournalSchema,
 } from "./esiInterface";
+import type { token } from "./esiInterface";
 import { env } from "~/env";
+import { FetchError, apiClient } from "./apiClient";
+import type { z } from "zod";
+
+const defaultQuery = "datasource=tranquility";
 
 export const esiClient = axios.create({
   baseURL: "https://esi.evetech.net/latest/",
@@ -37,64 +41,178 @@ export async function getRefreshToken(refreshToken: string) {
   return response.data as token;
 }
 
-export async function getCharacterInfo(characterId: string) {
-  const response = await esiClient.get(
-    `/characters/${characterId}/?datasource=tranquility`,
-  );
-  return response.data as charactersInfo;
-}
+// export async function getCharacterInfo(characterId: string) {
+//   const response = await esiClient.get(
+//     `/characters/${characterId}/?datasource=tranquility`,
+//   );
+//   return response.data as charactersInfo;
+// }
 
-export async function getCorpInfo(corpId: number) {
-  const response = await esiClient.get(
-    `/corporations/${corpId}/?datasource=tranquility`,
-  );
-  return response.data as corpInfo;
-}
-
-export async function getCorpBalence(corpId: number, token: string) {
-  const response = await esiClient.get(
-    `/corporations/${corpId}/wallets/?datasource=tranquility`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  );
-  // console.log("response::: ", response);
-  if (response.status != 200) {
-    if (response.status == 403) {
-      return -1;
-    }
-    throw new Error(
-      "Failed to get corp balence, error: " + response.statusText,
+export async function getCharacterInfo(
+  characterId: string,
+): Promise<{ message: string } | z.infer<typeof charactersInfoSchema>> {
+  try {
+    const response = await apiClient.get(
+      `/characters/${characterId}/?datasource=tranquility`,
     );
+    const data = (await response.json()) as z.infer<
+      typeof charactersInfoSchema
+    >;
+    return charactersInfoSchema.parse(data);
+  } catch (error) {
+    // if (error instanceof FetchError) {
+    //   switch (error.response.status) {
+    //     case 403:
+    //       return { message: "Forbidden" };
+    //     // case 404:
+    //     //   return { message: "Not found" };
+    //     default:
+    //       return { message: error.message };
+    //   }
+    // } else
+    if (error instanceof Error) {
+      return { message: error.message };
+    } else {
+      return { message: "Unknown error" };
+    }
   }
-  const balence = response.data as corpBalancePerDivision[];
-  return balence.reduce((acc, cur) => acc + cur.balance, 0);
 }
+
+// export async function getCorpInfo(corpId: number) {
+//   const response = await esiClient.get(
+//     `/corporations/${corpId}/?datasource=tranquility`,
+//   );
+//   return response.data as corpInfo;
+// }
+
+export async function getCorpInfo(
+  corpId: number,
+): Promise<{ message: string } | z.infer<typeof corpInfoSchema>> {
+  try {
+    const response = await apiClient.get(
+      `/corporations/${corpId}/?datasource=tranquility`,
+    );
+    const data = (await response.json()) as z.infer<typeof corpInfoSchema>;
+    return corpInfoSchema.parse(data);
+  } catch (error) {
+    if (error instanceof Error) {
+      return { message: error.message };
+    } else {
+      return { message: "Unknown error" };
+    }
+  }
+}
+
+// export async function getCorpBalence(corpId: number, token: string) {
+//   const response = await esiClient.get(
+//     `/corporations/${corpId}/wallets/?datasource=tranquility`,
+//     {
+//       headers: {
+//         Authorization: `Bearer ${token}`,
+//       },
+//     },
+//   );
+//   // console.log("response::: ", response);
+//   if (response.status != 200) {
+//     if (response.status == 403) {
+//       return -1;
+//     }
+//     throw new Error(
+//       "Failed to get corp balence, error: " + response.statusText,
+//     );
+//   }
+//   const balence = response.data as corpBalancePerDivision[];
+//   return balence.reduce((acc, cur) => acc + cur.balance, 0);
+// }
+
+export async function getCorpBalence(
+  corpId: number,
+  token: string,
+): Promise<{ message: string } | { balance: number }> {
+  try {
+    const response = await apiClient.get(
+      `/corporations/${corpId}/wallets/`,
+      defaultQuery,
+      { accessToken: token },
+    );
+    const data = (await response.json()) as z.infer<typeof corpBalanceSchema>;
+    const balance = corpBalanceSchema
+      .parse(data)
+      .reduce((acc, cur) => acc + cur.balance, 0);
+    return { balance };
+  } catch (error) {
+    if (error instanceof FetchError) {
+      switch (error.response.status) {
+        case 403:
+          // return { message: "Forbidden" };
+          if (error.message == "Character does not have required role(s)") {
+            return { message: "Insufficiunt account clearance" };
+          }
+        default:
+          return { message: error.message };
+      }
+    } else if (error instanceof Error) {
+      return { message: error.message };
+    } else {
+      return { message: "Unknown error" };
+    }
+  }
+}
+
+// export async function getCorpJournal(
+//   corpId: number,
+//   token: string,
+//   division: number,
+// ) {
+//   const response = await esiClient.get(
+//     `/corporations/${corpId}/wallets/${division}/journal/?datasource=tranquility`,
+//     {
+//       headers: {
+//         Authorization: `Bearer ${token}`,
+//       },
+//     },
+//   );
+//   if (response.status != 200) {
+//     if (response.status == 403) {
+//       return -1;
+//     }
+//     throw new Error(
+//       "Failed to get corp journal, error: " + response.statusText,
+//     );
+//   }
+
+//   // return response.data;
+//   return response.data as corpJournalEntry[];
+// }
 
 export async function getCorpJournal(
   corpId: number,
   token: string,
   division: number,
-) {
-  const response = await esiClient.get(
-    `/corporations/${corpId}/wallets/${division}/journal/?datasource=tranquility`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  );
-  if (response.status != 200) {
-    if (response.status == 403) {
-      return -1;
-    }
-    throw new Error(
-      "Failed to get corp journal, error: " + response.statusText,
+): Promise<{ message: string } | z.infer<typeof corpJournalSchema>> {
+  try {
+    const response = await apiClient.get(
+      `/corporations/${corpId}/wallets/${division}/journal/`,
+      defaultQuery,
+      { accessToken: token },
     );
+    const data = (await response.json()) as z.infer<typeof corpJournalSchema>;
+    return corpJournalSchema.parse(data);
+  } catch (error) {
+    if (error instanceof FetchError) {
+      switch (error.response.status) {
+        case 403:
+          // return { message: "Forbidden" };
+          if (error.message == "Character does not have required role(s)") {
+            return { message: "Insufficiunt account clearance" };
+          }
+        default:
+          return { message: error.message };
+      }
+    } else if (error instanceof Error) {
+      return { message: error.message };
+    } else {
+      return { message: "Unknown error" };
+    }
   }
-
-  // return response.data;
-  return response.data as corpJournalEntry[];
 }
