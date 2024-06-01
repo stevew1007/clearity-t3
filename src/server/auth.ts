@@ -12,10 +12,14 @@ import EveonlineProvider from "./auth_provider/eveProvider";
 import { env } from "~/env";
 import { db } from "~/server/db";
 import { accounts, corps, createTable } from "~/server/db/schema";
-import { getCharacterInfo, getCorpBalence } from "./lib/esiClient";
+import { fetchCharacterInfo, fetchCorpBalence } from "./lib/esiClient";
 import { eq } from "drizzle-orm";
 import { getAccountById, getCorpById } from "./query";
-import { newCorp, updateTokenIfNeededForUser } from "./insert";
+import {
+  newCorp,
+  updateCorpBalence,
+  updateTokenIfNeededForUser,
+} from "./insert";
 // import { eq } from "drizzle-orm";
 
 /**
@@ -46,6 +50,21 @@ declare module "next-auth" {
  */
 export const authOptions: NextAuthOptions = {
   callbacks: {
+    // signIn: async ({ account }) => {
+    //   // const { providerAccountId } = account;
+    //   if (account?.provider === "eveonline") {
+    //     const { providerAccountId } = account;
+    //     const charInfo = await fetchCharacterInfo(providerAccountId);
+    //     if ("error" in charInfo) {
+    //       console.error("[Error]: Cannot get character info", charInfo.error);
+    //       return false;
+    //     } else {
+    //       return true;
+    //     }
+    //   } else {
+    //     return false;
+    //   }
+    // },
     session: async ({ session, user }) => {
       await updateTokenIfNeededForUser(user.id);
       return {
@@ -64,40 +83,61 @@ export const authOptions: NextAuthOptions = {
         //
         const { providerAccountId } = account;
         try {
-          const info = await getCharacterInfo(providerAccountId);
-          let corp = await getCorpById(info.corporation_id);
+          console.log("1. Fetching character info for: ", providerAccountId);
+          const charInfo = await fetchCharacterInfo(providerAccountId);
+          if ("error" in charInfo) {
+            console.error("[Error]: Cannot get character info", charInfo.error);
+            return;
+          }
+
+          console.log("2. Checking if character's corp in db");
+          let corp = await getCorpById(charInfo.corporation_id);
           const db_acc = await getAccountById(providerAccountId);
 
+          // If corp is not in db, add new entry.
           if (corp === undefined) {
-            corp = await newCorp(info.corporation_id);
+            console.log("It is not. Adding new corp entry.");
+            corp = await newCorp(charInfo.corporation_id);
           }
 
-          if (corp.balence === null && db_acc && account.access_token) {
-            try {
-              const balence = await getCorpBalence(
-                info.corporation_id,
-                account.access_token,
-              );
-              if (balence > 0) {
-                await db
-                  .update(corps)
-                  .set({
-                    balence: balence,
-                    updatedBy: providerAccountId,
-                  })
-                  .where(eq(corps.esi_id, info.corporation_id));
-              }
-            } catch (error) {
-              console.error(error);
-            }
-          }
+          console.log("3. Attempt to fetch corp balance.");
+
+          updateCorpBalence(
+            charInfo.corporation_id,
+            corp.updatedBy ? undefined : providerAccountId,
+          );
+
+          // if (corp.balance === null && db_acc && account.access_token) {
+          //   try {
+          //     const corpBalInfo = await fetchCorpBalence(
+          //       charInfo.corporation_id,
+          //       account.access_token,
+          //     );
+          //     if ("error" in corpBalInfo) {
+          //       console.info("Cannot get corp balance", corpBalInfo.error);
+          //       return;
+          //     }
+          //     const balance = corpBalInfo.balance;
+          //     if (balance > 0) {
+          //       await db
+          //         .update(corps)
+          //         .set({
+          //           balance: balance,
+          //           updatedBy: providerAccountId,
+          //         })
+          //         .where(eq(corps.esi_id, charInfo.corporation_id));
+          //     }
+          //   } catch (error) {
+          //     console.error(error);
+          //   }
+          // }
           await db
             .update(accounts)
             .set({
-              alliance_id: info.alliance_id,
-              corporation_id: info.corporation_id,
-              character_name: info.name,
-              title: info.title,
+              alliance_id: charInfo.alliance_id,
+              corporation_id: charInfo.corporation_id,
+              character_name: charInfo.name,
+              title: charInfo.title,
             })
             .where(eq(accounts.providerAccountId, providerAccountId));
         } catch (error) {

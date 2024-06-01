@@ -23,7 +23,7 @@ export interface token {
 // }
 
 export const charactersInfoSchema = z.object({
-  alliance_id: z.number(),
+  alliance_id: z.number().optional(),
   birthday: z.string(),
   bloodline_id: z.number(),
   corporation_id: z.number(),
@@ -32,7 +32,7 @@ export const charactersInfoSchema = z.object({
   name: z.string(),
   race_id: z.number(),
   security_status: z.number(),
-  title: z.string(),
+  title: z.string().optional(),
 });
 
 // export interface corpInfo {

@@ -1,7 +1,8 @@
 import "server-only";
 import { db } from "./db";
-import { getCorpBalence } from "./lib/esiClient";
-import { cache } from "react";
+import { fetchCorpBalence } from "./lib/esiClient";
+import { InferSelectModel } from "drizzle-orm";
+import { corps } from "./db/schema";
 
 /* Account Table */
 export async function getAccountById(id: string) {
@@ -16,24 +17,22 @@ export async function getAccountsByUserId(id: string) {
   });
 }
 /* Corp Table */
-export interface DbCorpEntry {
-  name: string | null;
-  id: string;
-  alliance_id: number | null;
-  esi_id: number | null;
-  updatedBy: string | null;
-  balence: number | null;
-}
+// export interface DbCorpEntry {
+//   name: string | null;
+//   id: string;
+//   alliance_id: number | null;
+//   esi_id: number | null;
+//   updatedBy: string | null;
+//   balance: number | null;
+// }
 
-export async function getCorpById(
-  id: number,
-): Promise<DbCorpEntry | undefined> {
+export async function getCorpById(id: number) {
   return await db.query.corps.findFirst({
     where: (model, { eq }) => eq(model.esi_id, id),
   });
 }
 
-export async function getAllCorps(): Promise<DbCorpEntry[]> {
+export async function getAllCorps() {
   return await db.query.corps.findMany();
 }
 
@@ -45,9 +44,8 @@ export async function getCorpUpdaterInfo(id: number) {
   return await getAccountById(corp.updatedBy!);
 }
 
-export const queryCorpBalence = cache(async (id: number) => {
+export const queryCorpBalence = async (id: number) => {
   try {
-    console.log("loading corp balence for: ", id);
     const corp = await getCorpById(id);
     // console.log("corp::: ", corp);
     if (!corp) {
@@ -58,7 +56,7 @@ export const queryCorpBalence = cache(async (id: number) => {
     if (!updater) {
       throw new Error("Updater not set for this corp.");
     }
-    const balence = await getCorpBalence(id, updater.access_token!);
+    const balence = await fetchCorpBalence(id, updater.access_token!);
     return {
       balence,
       updater_id: updater.providerAccountId,
@@ -69,4 +67,4 @@ export const queryCorpBalence = cache(async (id: number) => {
       return { message: `Failed to get corp balence. ${e.message}` };
     }
   }
-});
+};

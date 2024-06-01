@@ -32,7 +32,7 @@ class ApiClient {
   private base_url: string;
 
   constructor() {
-    this.base_url = "https://esi.evetech.net/latest/";
+    this.base_url = "https://esi.evetech.net/latest";
   }
 
   async request(options: ApiClientOptions) {
@@ -45,8 +45,7 @@ class ApiClient {
     const headers = options.accessToken
       ? { Authorization: `Bearer ${options.accessToken}`, ...options.headers }
       : options.headers;
-
-    const response = await fetch(this.base_url + options.path + query, {
+    const response = await fetch(this.base_url + options.path + query , {
       method: options.method,
       headers: {
         "Content-Type": "application/json",
@@ -54,6 +53,7 @@ class ApiClient {
         ...headers,
       },
     });
+    
     if (!response.ok) {
       throw new FetchError("Bad fetch response", response);
     } else {

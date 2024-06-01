@@ -93,7 +93,7 @@ function UserIcon() {
           <DropdownMenuItem>Settings</DropdownMenuItem>
           <DropdownMenuItem>Support</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Logout</DropdownMenuItem>
+          <DropdownMenuItem><button onClick={() => signOut()}>Logout</button></DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     );

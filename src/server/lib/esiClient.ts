@@ -22,7 +22,7 @@ export const esiClient = axios.create({
   },
 });
 
-export async function getRefreshToken(refreshToken: string) {
+export async function refreshToken(refreshToken: string) {
   const response = await axios.post(
     "https://login.eveonline.com/v2/oauth/token",
     new URLSearchParams({
@@ -48,9 +48,9 @@ export async function getRefreshToken(refreshToken: string) {
 //   return response.data as charactersInfo;
 // }
 
-export async function getCharacterInfo(
+export async function fetchCharacterInfo(
   characterId: string,
-): Promise<{ message: string } | z.infer<typeof charactersInfoSchema>> {
+): Promise<{ error: string } | z.infer<typeof charactersInfoSchema>> {
   try {
     const response = await apiClient.get(
       `/characters/${characterId}/?datasource=tranquility`,
@@ -60,20 +60,21 @@ export async function getCharacterInfo(
     >;
     return charactersInfoSchema.parse(data);
   } catch (error) {
-    // if (error instanceof FetchError) {
-    //   switch (error.response.status) {
-    //     case 403:
-    //       return { message: "Forbidden" };
-    //     // case 404:
-    //     //   return { message: "Not found" };
-    //     default:
-    //       return { message: error.message };
-    //   }
-    // } else
+    if (error instanceof FetchError) {
+      // switch (error.response.status) {
+      //   case 403:
+      //     return { message: "Forbidden" };
+      //   // case 404:
+      //   //   return { message: "Not found" };
+      //   default:
+      //     return { message: error.message };
+      // }
+      return { error: error.message };
+    } else
     if (error instanceof Error) {
-      return { message: error.message };
+      return { error: error.message };
     } else {
-      return { message: "Unknown error" };
+      return { error: "Unknown error" };
     }
   }
 }
@@ -85,9 +86,9 @@ export async function getCharacterInfo(
 //   return response.data as corpInfo;
 // }
 
-export async function getCorpInfo(
+export async function fetchCorpInfo(
   corpId: number,
-): Promise<{ message: string } | z.infer<typeof corpInfoSchema>> {
+): Promise<{ error: string } | z.infer<typeof corpInfoSchema>> {
   try {
     const response = await apiClient.get(
       `/corporations/${corpId}/?datasource=tranquility`,
@@ -96,9 +97,9 @@ export async function getCorpInfo(
     return corpInfoSchema.parse(data);
   } catch (error) {
     if (error instanceof Error) {
-      return { message: error.message };
+      return { error: error.message };
     } else {
-      return { message: "Unknown error" };
+      return { error: "Unknown error" };
     }
   }
 }
@@ -112,7 +113,7 @@ export async function getCorpInfo(
 //       },
 //     },
 //   );
-//   // console.log("response::: ", response);
+//   // 
 //   if (response.status != 200) {
 //     if (response.status == 403) {
 //       return -1;
@@ -125,10 +126,10 @@ export async function getCorpInfo(
 //   return balence.reduce((acc, cur) => acc + cur.balance, 0);
 // }
 
-export async function getCorpBalence(
+export async function fetchCorpBalence(
   corpId: number,
   token: string,
-): Promise<{ message: string } | { balance: number }> {
+): Promise<{ error: string } | { balance: number }> {
   try {
     const response = await apiClient.get(
       `/corporations/${corpId}/wallets/`,
@@ -146,15 +147,15 @@ export async function getCorpBalence(
         case 403:
           // return { message: "Forbidden" };
           if (error.message == "Character does not have required role(s)") {
-            return { message: "Insufficiunt account clearance" };
+            return { error: "Insufficiunt account clearance" };
           }
         default:
-          return { message: error.message };
+          return { error: error.message };
       }
     } else if (error instanceof Error) {
-      return { message: error.message };
+      return { error: error.message };
     } else {
-      return { message: "Unknown error" };
+      return { error: "Unknown error" };
     }
   }
 }

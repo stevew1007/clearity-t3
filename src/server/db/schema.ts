@@ -136,7 +136,8 @@ export const corps = createTable("corp", {
   name: varchar("name", { length: 255 }),
   updatedBy: varchar("updatedBy", { length: 255 }),
   alliance_id: integer("alliance_id"),
-  balence: doublePrecision("balence"),
+  balance: doublePrecision("balance"),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }),
 });
 
 // export const corpsRelations = relations(corps, ({ one }) => ({
