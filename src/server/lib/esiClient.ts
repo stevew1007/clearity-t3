@@ -70,8 +70,7 @@ export async function fetchCharacterInfo(
       //     return { message: error.message };
       // }
       return { error: error.message };
-    } else
-    if (error instanceof Error) {
+    } else if (error instanceof Error) {
       return { error: error.message };
     } else {
       return { error: "Unknown error" };
@@ -113,7 +112,7 @@ export async function fetchCorpInfo(
 //       },
 //     },
 //   );
-//   // 
+//   //
 //   if (response.status != 200) {
 //     if (response.status == 403) {
 //       return -1;
@@ -186,7 +185,7 @@ export async function fetchCorpBalence(
 //   return response.data as corpJournalEntry[];
 // }
 
-export async function getCorpJournal(
+export async function fetchCorpJournal(
   corpId: number,
   token: string,
   division: number,

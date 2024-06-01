@@ -16,6 +16,7 @@ import Navbar from "./_components/navbar";
 import { authOptions } from "~/server/auth";
 import { redirect } from "next/navigation";
 import { TooltipProvider } from "~/components/ui/tooltip";
+import QueryProvider from "./_components/QueryProvider";
 // import { getServerSession } from "next-auth/next";
 // // import { authOptions } from "../api/auth/[...nextauth]";
 // import { authOptions } from "~/server/auth";
@@ -77,15 +78,17 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
       <SessionProvider session={session}>
-        <TooltipProvider>
-          <body className="bg-muted/40 flex min-h-screen w-full flex-col">
-            <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
-              <Navbar />
-              {children}
-            </div>
-            {/* <TopNav /> */}
-          </body>
-        </TooltipProvider>
+        <QueryProvider>
+          <TooltipProvider>
+            <body className="flex min-h-screen w-full flex-col bg-muted/40">
+              <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
+                <Navbar />
+                {children}
+              </div>
+              {/* <TopNav /> */}
+            </body>
+          </TooltipProvider>
+        </QueryProvider>
       </SessionProvider>
     </html>
   );

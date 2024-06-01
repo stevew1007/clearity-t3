@@ -14,12 +14,12 @@ import { db } from "~/server/db";
 import { accounts, corps, createTable } from "~/server/db/schema";
 import { fetchCharacterInfo, fetchCorpBalence } from "./lib/esiClient";
 import { eq } from "drizzle-orm";
-import { getAccountById, getCorpById } from "./query";
+import { getAccountById, getCorpById } from "./queryActions";
 import {
   newCorp,
   updateCorpBalence,
   updateTokenIfNeededForUser,
-} from "./insert";
+} from "./insertActions";
 // import { eq } from "drizzle-orm";
 
 /**
@@ -86,13 +86,13 @@ export const authOptions: NextAuthOptions = {
           console.log("1. Fetching character info for: ", providerAccountId);
           const charInfo = await fetchCharacterInfo(providerAccountId);
           if ("error" in charInfo) {
-            console.error("[Error]: Cannot get character info", charInfo.error);
-            return;
+            // console.error("[Error]: Cannot get character info", charInfo.error);
+            // return;
+            throw Error(`Cannot get character info: ${charInfo.error}`);
           }
 
           console.log("2. Checking if character's corp in db");
           let corp = await getCorpById(charInfo.corporation_id);
-          const db_acc = await getAccountById(providerAccountId);
 
           // If corp is not in db, add new entry.
           if (corp === undefined) {
@@ -102,35 +102,15 @@ export const authOptions: NextAuthOptions = {
 
           console.log("3. Attempt to fetch corp balance.");
 
-          updateCorpBalence(
+          const updateCorpBalInfo = updateCorpBalence(
             charInfo.corporation_id,
             corp.updatedBy ? undefined : providerAccountId,
           );
-
-          // if (corp.balance === null && db_acc && account.access_token) {
-          //   try {
-          //     const corpBalInfo = await fetchCorpBalence(
-          //       charInfo.corporation_id,
-          //       account.access_token,
-          //     );
-          //     if ("error" in corpBalInfo) {
-          //       console.info("Cannot get corp balance", corpBalInfo.error);
-          //       return;
-          //     }
-          //     const balance = corpBalInfo.balance;
-          //     if (balance > 0) {
-          //       await db
-          //         .update(corps)
-          //         .set({
-          //           balance: balance,
-          //           updatedBy: providerAccountId,
-          //         })
-          //         .where(eq(corps.esi_id, charInfo.corporation_id));
-          //     }
-          //   } catch (error) {
-          //     console.error(error);
-          //   }
-          // }
+          if ("error" in updateCorpBalInfo) {
+            throw new Error(
+              `Failed to update corp balance: ${updateCorpBalInfo.error}`,
+            );
+          }
           await db
             .update(accounts)
             .set({
@@ -140,12 +120,16 @@ export const authOptions: NextAuthOptions = {
               title: charInfo.title,
             })
             .where(eq(accounts.providerAccountId, providerAccountId));
-        } catch (error) {
-          console.error("Error fetching character info", error);
-          // return false;
+        } catch (e) {
+          if (e instanceof Error) {
+            console.error(`[Error] [Character Info Fetching] ${e.message}`, e);
+          } else {
+            console.error(`[Error] [Character Info Fetching] Unknown error`, e);
+          }
         }
+      } else {
+        console.log("Not an eveonline account");
       }
-      // return true;
     },
   },
   adapter: DrizzleAdapter(db, createTable) as Adapter,

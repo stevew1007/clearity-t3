@@ -9,67 +9,70 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { cn } from "~/lib/utils";
-import {
-  type DbCorpEntry,
-  getAllCorps,
-  queryCorpBalence,
-} from "~/server/query";
+// import {
+//   type DbCorpEntry,
+//   getAllCorps,
+//   queryCorpBalence,
+// } from "~/server/query";
 
 import moment from "moment";
+import { getAllCorps } from "~/server/queryActions";
+import CorpBalanceCard, { corpInfoProps } from "./corpBalanceCard";
 
-interface CorpBalenceCardProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  corp: DbCorpEntry;
-}
+// interface CorpBalenceCardProps
+//   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+//   corp: DbCorpEntry;
+// }
 
-const CorpBalenceCard = React.forwardRef<HTMLDivElement, CorpBalenceCardProps>(
-  async function CorpBalenceCard({ className, corp }, ref) {
-    const data = await queryCorpBalence(corp.esi_id!);
-    // console.log("data::: ", data);
-    let balenceStr = "Nah";
-    // let time_since = null;
-    if (data?.balence) {
-      balenceStr = data.balence
-        ? `${new Intl.NumberFormat().format(data.balence / 1000000000)}B isk`
-        : "Nah";
-    }
-    // const query = useQuery({
-    //   queryFn: async () => {
-    //     return await queryCorpBalence(corp.esi_id!);
-    //   },
-    //   queryKey: [`corp-balence-${corp.esi_id}`],
-    // });
+// const CorpBalenceCard = React.forwardRef<HTMLDivElement, CorpBalenceCardProps>(
+//   async function CorpBalenceCard({ className, corp }, ref) {
+//     const data = await queryCorpBalence(corp.esi_id!);
+//     // console.log("data::: ", data);
+//     let balenceStr = "Nah";
+//     // let time_since = null;
+//     if (data?.balence) {
+//       balenceStr = data.balence
+//         ? `${new Intl.NumberFormat().format(data.balence / 1000000000)}B isk`
+//         : "Nah";
+//     }
+//     // const query = useQuery({
+//     //   queryFn: async () => {
+//     //     return await queryCorpBalence(corp.esi_id!);
+//     //   },
+//     //   queryKey: [`corp-balence-${corp.esi_id}`],
+//     // });
 
-    return (
-      <Card
-        x-chunk="dashboard-05-chunk-1"
-        className={cn(className, "w-fit min-w-16")}
-        ref={ref}
-      >
-        <CardHeader className="pb-2">
-          <CardDescription>
-            {corp.name}
-            {"   #"}
-            {corp.esi_id}
-          </CardDescription>
-          <CardTitle className="text-4xl">{balenceStr}</CardTitle>
-        </CardHeader>
-        {corp.updatedBy && (
-          <CardContent>
-            <div className="text-xs text-muted-foreground">
-              Updated by: #{data?.updater_id}{" "}
-              {data?.updated_at && moment(data.updated_at).fromNow()}
-            </div>
-          </CardContent>
-        )}
-        {/* <CardFooter>
-        <Progress value={25} aria-label="25% increase" />
-      </CardFooter> */}
-      </Card>
-    );
-  },
-);
+//     return (
+//       <Card
+//         x-chunk="dashboard-05-chunk-1"
+//         className={cn(className, "w-fit min-w-16")}
+//         ref={ref}
+//       >
+//         <CardHeader className="pb-2">
+//           <CardDescription>
+//             {corp.name}
+//             {"   #"}
+//             {corp.esi_id}
+//           </CardDescription>
+//           <CardTitle className="text-4xl">{balenceStr}</CardTitle>
+//         </CardHeader>
+//         {corp.updatedBy && (
+//           <CardContent>
+//             <div className="text-xs text-muted-foreground">
+//               Updated by: #{data?.updater_id}{" "}
+//               {data?.updated_at && moment(data.updated_at).fromNow()}
+//             </div>
+//           </CardContent>
+//         )}
+//         {/* <CardFooter>
+//         <Progress value={25} aria-label="25% increase" />
+//       </CardFooter> */}
+//       </Card>
+//     );
+//   },
+// );
 // export async function Balance() {
+
 export const Balance = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -78,10 +81,10 @@ export const Balance = React.forwardRef<
 
   return (
     <div className={cn(className, "flex gap-4")} ref={ref}>
-      {(await corps).map(async (corp: DbCorpEntry, index) => {
+      {(await corps).map((corp, index) => {
         return (
           <Card className="" key={index}>
-            <CorpBalenceCard corp={corp} />
+            <CorpBalanceCard corp={corp as corpInfoProps} />
           </Card>
         );
       })}
