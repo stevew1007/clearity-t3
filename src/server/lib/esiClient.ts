@@ -22,23 +22,47 @@ export const esiClient = axios.create({
   },
 });
 
-export async function refreshToken(refreshToken: string) {
-  const response = await axios.post(
-    "https://login.eveonline.com/v2/oauth/token",
-    new URLSearchParams({
-      grant_type: "refresh_token",
-      refresh_token: refreshToken,
-    }),
-    {
-      headers: {
-        Authorization: `Basic ${Buffer.from(
-          `${env.EVE_CLIENT_ID}:${env.EVE_CLIENT_SECRET}`,
-        ).toString("base64")}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    },
-  );
-  return response.data as token;
+// export async function refreshToken(refreshToken: string) {
+//   const response = await axios.post(
+//     "https://login.eveonline.com/v2/oauth/token",
+//     new URLSearchParams({
+//       grant_type: "refresh_token",
+//       refresh_token: refreshToken,
+//     }),
+//     {
+//       headers: {
+//         Authorization: `Basic ${Buffer.from(
+//           `${env.EVE_CLIENT_ID}:${env.EVE_CLIENT_SECRET}`,
+//         ).toString("base64")}`,
+//         "Content-Type": "application/x-www-form-urlencoded",
+//       },
+//     },
+//   );
+//   return response.data as token;
+// }
+
+export async function refreshToken(
+  token: string,
+): Promise<token | { error: string }> {
+  try {
+    const response = await apiClient.refreshToken(token);
+    return (await response.json()) as token;
+  } catch (error) {
+    if (error instanceof FetchError) {
+      // switch (error.response.status) {
+      //   case 403:
+      //     console.log(error.message);
+      //   // return { message: "Forbidden" };
+      //   default:
+      //     return { message: error.message };
+      // }
+      return { error: `[ERROR ${error.response.status}]: ${error.message}` };
+    } else if (error instanceof Error) {
+      return { error: error.message };
+    } else {
+      return { error: "Unknown error" };
+    }
+  }
 }
 
 // export async function getCharacterInfo(characterId: string) {

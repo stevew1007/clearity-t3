@@ -18,6 +18,7 @@ import { getAccountById, getCorpById } from "./queryActions";
 import {
   newCorp,
   updateCorpBalence,
+  updateTokenForAllAccount,
   updateTokenIfNeededForUser,
 } from "./insertActions";
 // import { eq } from "drizzle-orm";
@@ -66,7 +67,7 @@ export const authOptions: NextAuthOptions = {
     //   }
     // },
     session: async ({ session, user }) => {
-      await updateTokenIfNeededForUser(user.id);
+      await updateTokenForAllAccount();
       return {
         ...session,
         user: {

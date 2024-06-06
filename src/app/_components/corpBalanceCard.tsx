@@ -40,7 +40,7 @@ const CorpBalanceCard = forwardRef<HTMLDivElement, CorpBalanceCardProps>(
         updatedAt: "--",
       },
     });
-    if (!data) {
+    if (!data || error) {
       return (
         <Card
           x-chunk="dashboard-05-chunk-1"

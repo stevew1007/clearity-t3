@@ -45,7 +45,7 @@ class ApiClient {
     const headers = options.accessToken
       ? { Authorization: `Bearer ${options.accessToken}`, ...options.headers }
       : options.headers;
-    const response = await fetch(this.base_url + options.path + query , {
+    const response = await fetch(this.base_url + options.path + query, {
       method: options.method,
       headers: {
         "Content-Type": "application/json",
@@ -53,7 +53,7 @@ class ApiClient {
         ...headers,
       },
     });
-    
+
     if (!response.ok) {
       throw new FetchError("Bad fetch response", response);
     } else {
@@ -90,7 +90,7 @@ class ApiClient {
     return this.request({ path, method: "DELETE", ...options });
   }
 
-  async refresh(token: string) {
+  async refreshToken(token: string) {
     const query = new URLSearchParams({
       grant_type: "refresh_token",
       refresh_token: token,

@@ -6,9 +6,9 @@ import {
   getCorpById,
   getAccountById,
   getAccountsByUserId,
+  getAllAccounts,
 } from "./queryActions";
 import { eq } from "drizzle-orm";
-import { token } from "./lib/esiInterface";
 
 export async function updateTokenIfNeededForUser(user_id: string) {
   const account_list = await getAccountsByUserId(user_id);
@@ -19,6 +19,39 @@ export async function updateTokenIfNeededForUser(user_id: string) {
         if (expires_at! * 1000 < Date.now()) {
           console.log("Refreshing token for: ", providerAccountId);
           const token = await refreshToken(refresh_token!);
+          if ("error" in token) {
+            console.log("Failed to refresh token: ", token.error);
+            return;
+          }
+          // console.log("token::: ", token);
+          await db
+            .update(accounts)
+            .set({
+              access_token: token.access_token,
+              expires_at: Math.floor(Date.now() / 1000 + token.expires_in),
+              refresh_token: token.refresh_token,
+            })
+            .where(eq(accounts.providerAccountId, providerAccountId));
+        } else {
+          return null;
+        }
+      },
+    ),
+  );
+}
+
+export async function updateTokenForAllAccount() {
+  const account_list = await getAllAccounts();
+  await Promise.all(
+    account_list.map(
+      async ({ providerAccountId, expires_at, refresh_token }) => {
+        if (expires_at! * 1000 < Date.now()) {
+          console.log("Refreshing token for: ", providerAccountId);
+          const token = await refreshToken(refresh_token!);
+          if ("error" in token) {
+            console.log("Failed to refresh token: ", token.error);
+            throw Error("Failed to refresh token");
+          }
           // console.log("token::: ", token);
           await db
             .update(accounts)
@@ -116,4 +149,7 @@ export async function updateCorpBalence(id: number, updater_id?: string) {
       return { error: "Unknown error" };
     }
   }
+}
+function refresh(arg0: string) {
+  throw new Error("Function not implemented.");
 }

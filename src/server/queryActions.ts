@@ -18,6 +18,10 @@ export async function getAccountsByUserId(id: string) {
   });
 }
 
+export async function getAllAccounts() {
+  return await db.query.accounts.findMany();
+}
+
 export async function getCorpById(id: number) {
   return await db.query.corps.findFirst({
     where: (model, { eq }) => eq(model.esi_id, id),
@@ -38,7 +42,7 @@ export async function getCorpUpdaterInfo(id: number) {
 
 export async function queryCorpBalence(
   id: number,
-  timeout: number = 1000 * 60, // 1 minute timeout
+  timeout: number = 1000 * 60 * 15, // 15 minute timeout
 ): Promise<
   { balance: number; updateAt: Date; updater: string } | { error: string }
 > {
